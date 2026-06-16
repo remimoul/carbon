@@ -15,3 +15,5 @@ tests/logs/*
 .vscode/launch.json
 GEMINI.md 
 NUMECOEVAL_PRP.md
+.idea
+/public
