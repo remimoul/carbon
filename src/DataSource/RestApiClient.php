@@ -71,6 +71,8 @@ class RestApiClient implements RestApiClientInterface
     {
         try {
             $request = $this->api_client;
+            $raw = $options['raw_response'] ?? false;
+            unset($options['raw_response']);
             $response = $request->request($method, $uri, $options);
         } catch (RequestException $e) {
             $this->last_error = [
@@ -85,6 +87,10 @@ class RestApiClient implements RestApiClientInterface
             Toolbox::logDebug($this->last_error);
 
             return false;
+        }
+
+        if ($raw) {
+            return (string)$response->getBody();
         }
 
         return json_decode($response->getBody(), true);
