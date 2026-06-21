@@ -46,6 +46,40 @@
 
     {% block body %}
     {{ include('central/messages.html.twig') }}
+
+    {# Ensure carbon.js is loaded (GLPI hooks may not always include it on this page) #}
+    <script src="{{ carbon_js_url }}"></script>
+
+    {% if numecoeval_enabled %}
+      <div class="container-fluid my-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="fas fa-leaf text-success"></i> {{ __('NumEcoEval LCA Calculation', 'carbon') }}
+            </h5>
+            <p class="text-muted mb-3">{{ __('Lifecycle assessment for peripherals via NumEcoEval. Follow the steps below.', 'carbon') }}</p>
+
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              {# Step 1: Upload inventory #}
+              <button id="numecoeval-upload-btn" class="btn btn-primary"
+                      onclick="GLPIPlugin.Carbon.uploadInventory('{{ numecoeval_ajax_url }}', '{{ numecoeval_csrf_token }}')">
+                <i class="fas fa-upload"></i> {{ __('Step 1: Upload inventory', 'carbon') }}
+              </button>
+
+              {# Step 2: Launch calculation (disabled until step 1 OK) #}
+              <button id="numecoeval-calcul-btn" class="btn btn-secondary" disabled
+                      onclick="GLPIPlugin.Carbon.submitCalcul('{{ numecoeval_ajax_url }}', '{{ numecoeval_csrf_token }}')">
+                <i class="fas fa-calculator"></i> {{ __('Step 2: Launch calculation', 'carbon') }}
+              </button>
+            </div>
+
+            {# Status message area #}
+            <div id="numecoeval-status" class="alert mt-2" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
     <div class="page-body">
       {{ dashboard|raw }}
     </div>

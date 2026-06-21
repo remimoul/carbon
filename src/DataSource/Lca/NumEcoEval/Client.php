@@ -64,26 +64,82 @@ class Client extends AbstractClient
      * Upload inventory CSV to NumEcoEval Exposition service
      *
      * @param string $csvContent
+     * @param string $lotName
+     * @param string $organization
      * @return bool
      */
-    public function uploadCsv(string $csvContent): bool
+    public function uploadCsv(string $csvContent, string $lotName, string $organization = 'GLPI'): bool
     {
-        $url = Config::getConfigurationValue('numecoeval_exposition_url');
+        $url = rtrim(Config::getConfigurationValue('numecoeval_exposition_url'), '/');
         if (empty($url)) {
             throw new RuntimeException('NumEcoEval Exposition URL is not configured');
         }
 
         $response = $this->client->request('POST', $url . '/entrees/csv', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+            'query' => [
+                'nomLot'          => $lotName,
+                'nomOrganisation' => $organization,
+            ],
             'multipart' => [
                 [
-                    'name'     => 'file',
+                    'name'     => 'csvEquipementPhysique',
                     'contents' => $csvContent,
-                    'filename' => 'equipement_physique.csv'
-                ]
+                    'filename' => 'equipement_physique.csv',
+                    'headers'  => ['Content-Type' => 'text/csv']
+                ],
+                ['name' => 'csvDataCenter', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvEquipementVirtuel', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvApplication', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvOperationNonIT', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvMessagerie', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvEntite', 'contents' => '', 'filename' => '']
             ]
         ]);
 
         return $response !== false;
+    }
+
+    /**
+     * Fetch valid steps from Referential service
+     *
+     * @return array
+     */
+    public function fetchSteps(): array
+    {
+        $url = rtrim(Config::getConfigurationValue('numecoeval_referential_url'), '/');
+        if (empty($url)) {
+            throw new RuntimeException('NumEcoEval Referential URL is not configured');
+        }
+
+        $response = $this->client->request('GET', $url . '/referentiel/etapes', []);
+        if (empty($response) || !is_array($response)) {
+            return [];
+        }
+
+        return array_column($response, 'code');
+    }
+
+    /**
+     * Fetch valid criteria from Referential service
+     *
+     * @return array
+     */
+    public function fetchCriteria(): array
+    {
+        $url = rtrim(Config::getConfigurationValue('numecoeval_referential_url'), '/');
+        if (empty($url)) {
+            throw new RuntimeException('NumEcoEval Referential URL is not configured');
+        }
+
+        $response = $this->client->request('GET', $url . '/referentiel/criteres', []);
+        if (empty($response) || !is_array($response)) {
+            return [];
+        }
+
+        return array_column($response, 'nomCritere');
     }
 
     /**
@@ -96,7 +152,7 @@ class Client extends AbstractClient
      */
     public function submitCalcul(string $lotName, array $steps = [], array $criterias = []): bool
     {
-        $url = Config::getConfigurationValue('numecoeval_exposition_url');
+        $url = rtrim(Config::getConfigurationValue('numecoeval_exposition_url'), '/');
         if (empty($url)) {
             throw new RuntimeException('NumEcoEval Exposition URL is not configured');
         }
@@ -123,12 +179,15 @@ class Client extends AbstractClient
      */
     public function fetchResults(string $lotName, string $organization = 'GLPI'): array
     {
-        $url = Config::getConfigurationValue('numecoeval_indicators_url');
+        $url = rtrim(Config::getConfigurationValue('numecoeval_indicators_url'), '/');
         if (empty($url)) {
             throw new RuntimeException('NumEcoEval Indicators URL is not configured');
         }
 
         $csvData = $this->client->request('GET', $url . '/indicateur/equipementPhysiqueCsv', [
+            'headers' => [
+                'Accept' => 'text/csv, text/plain, */*',
+            ],
             'query' => [
                 'nomLot'          => $lotName,
                 'nomOrganisation' => $organization,

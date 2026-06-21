@@ -47,6 +47,7 @@ use GlpiPlugin\Carbon\Impact\Embodied\Engine;
 use GuzzleHttp\Client;
 use Monitor as GlpiMonitor;
 use NetworkEquipment as GlpiNetworkEquipment;
+use Peripheral as GlpiPeripheral;
 use Override;
 use Session;
 use Twig\Extension\StringLoaderExtension;
@@ -104,6 +105,10 @@ class Config extends GlpiConfig
     {
         $current_config = GlpiConfig::getConfigurationValues(self::CONFIG_CONTEXT);
         $current_config['geocoding_enabled'] ??= '0';
+        $current_config['impact_engines'] ??= 'Boavizta';
+        $current_config['numecoeval_exposition_url'] ??= '';
+        $current_config['numecoeval_indicators_url'] ??= '';
+        $current_config['numecoeval_referential_url'] ??= '';
         $canedit        = Session::haveRight(Config::$rightname, UPDATE);
 
         // Get config template foreach LCA data source
@@ -182,6 +187,7 @@ class Config extends GlpiConfig
             GlpiComputer::class,
             GlpiMonitor::class,
             GlpiNetworkEquipment::class,
+            GlpiPeripheral::class,
             // Printer::class,
             // Phone::class
         ];
