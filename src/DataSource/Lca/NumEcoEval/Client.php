@@ -80,8 +80,8 @@ class Client extends AbstractClient
                 'Accept' => 'application/json',
             ],
             'query' => [
-                'nomLot'          => $lotName,
                 'nomOrganisation' => $organization,
+                'nomLot'          => $lotName,
             ],
             'multipart' => [
                 [
