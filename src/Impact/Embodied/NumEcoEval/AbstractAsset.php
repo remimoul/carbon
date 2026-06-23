@@ -103,7 +103,7 @@ abstract class AbstractAsset extends AbstractEmbodiedImpact implements AssetInte
              $criteria = ['Changement climatique'];
         }
 
-        if (!$client->submitCalcul($lotName, $steps, $criteria)) {
+        if (!$client->submitCalcul($lotName, $steps, $criteria, $organization)) {
             return 0;
         }
 
@@ -194,6 +194,17 @@ abstract class AbstractAsset extends AbstractEmbodiedImpact implements AssetInte
     }
 
     /**
+     * Public wrapper to update impact data in the database for the asset
+     *
+     * @param array $impacts
+     * @return bool
+     */
+    public function updateAssetImpacts(array $impacts): bool
+    {
+        return $this->updateImpacts($impacts);
+    }
+
+    /**
      * Update the impact data in the database for the current item
      *
      * @param array $impacts
@@ -259,7 +270,7 @@ abstract class AbstractAsset extends AbstractEmbodiedImpact implements AssetInte
              $criteria = ['Changement climatique'];
         }
 
-        if (!$this->client->submitCalcul($lotName, $steps, $criteria)) {
+        if (!$this->client->submitCalcul($lotName, $steps, $criteria, $organization)) {
             return null;
         }
 

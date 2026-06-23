@@ -52,14 +52,24 @@ class NetworkEquipment extends AbstractAsset
         }
 
         $type = new NetworkEquipmentType();
-        $type_name = '';
+        $type_name = 'Commutateur'; // Default fallback
         if ($type->getFromDB($this->item->fields['networkequipmenttypes_id'])) {
-            $type_name = $type->fields['name'];
+            $raw_type = $type->fields['name'];
+            if (stripos($raw_type, 'switch') !== false || stripos($raw_type, 'commutateur') !== false) {
+                $type_name = 'Commutateur';
+            } elseif (stripos($raw_type, 'routeur') !== false || stripos($raw_type, 'router') !== false) {
+                $type_name = 'Routeur';
+            }
         }
 
         $country_code = Location::getZoneCode($this->item);
-        if (empty($country_code)) {
-            $country_code = 'FRA'; // Default for NumEcoEval
+        $country = 'France';
+        if (!empty($country_code)) {
+            if ($country_code === 'FRA') {
+                $country = 'France';
+            } else {
+                $country = $country_code;
+            }
         }
 
         return [
@@ -67,22 +77,20 @@ class NetworkEquipment extends AbstractAsset
             'modele'                => $model_name,
             'quantite'              => 1,
             'nomCourtDatacenter'    => '',
-            'dateAchat'             => $this->item->fields['date_purchase'] ?? date('Y-m-d'),
+            'dateAchat'             => $this->item->fields['date_purchase'] ?? '',
             'dateRetrait'           => '',
-            'dureeUsageInterne'     => '',
-            'dureeUsageAmont'       => '',
-            'dureeUsageAval'        => '',
             'type'                  => $type_name,
-            'statut'                => 'En fonction',
-            'paysDUtilisation'      => $country_code,
+            'statut'                => 'actif',
+            'paysDUtilisation'      => $country,
             'consoElecAnnuelle'     => '',
             'utilisateur'           => '',
             'nomSourceDonnee'       => '',
             'nomEntite'             => '',
             'nbCoeur'               => '',
+            'nbJourUtiliseAn'       => '365',
+            'goTelecharge'          => '',
             'modeUtilisation'       => '',
-            'tauxUtilisation'       => '',
-            'qualite'               => ''
+            'tauxUtilisation'       => ''
         ];
     }
 }

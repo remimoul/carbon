@@ -150,7 +150,7 @@ class Client extends AbstractClient
      * @param array $criterias
      * @return bool
      */
-    public function submitCalcul(string $lotName, array $steps = [], array $criterias = []): bool
+    public function submitCalcul(string $lotName, array $steps = [], array $criterias = [], string $organization = 'GLPI'): bool
     {
         $url = rtrim(Config::getConfigurationValue('numecoeval_exposition_url'), '/');
         if (empty($url)) {
@@ -158,12 +158,16 @@ class Client extends AbstractClient
         }
 
         $payload = [
-            'nomLot'   => $lotName,
-            'etapes'   => $steps,
-            'criteres' => $criterias
+            'nomLot'          => $lotName,
+            'nomOrganisation' => $organization,
+            'etapes'          => $steps,
+            'criteres'        => $criterias
         ];
 
         $response = $this->client->request('POST', $url . '/entrees/calculs/soumission', [
+            'query' => [
+                'nomOrganisation' => $organization,
+            ],
             'json' => $payload
         ]);
 

@@ -52,14 +52,22 @@ class Peripheral extends AbstractAsset
         }
 
         $type = new PeripheralType();
-        $type_name = '';
+        $type_name = 'Ecran'; // Default for peripheral in this context
         if ($type->getFromDB($this->item->fields['peripheraltypes_id'])) {
-            $type_name = $type->fields['name'];
+            $raw_type = $type->fields['name'];
+            if (stripos($raw_type, 'ecran') !== false || stripos($raw_type, 'monitor') !== false || stripos($raw_type, 'screen') !== false) {
+                $type_name = 'Ecran';
+            }
         }
 
         $country_code = Location::getZoneCode($this->item);
-        if (empty($country_code)) {
-            $country_code = 'FRA'; // Default for NumEcoEval
+        $country = 'France';
+        if (!empty($country_code)) {
+            if ($country_code === 'FRA') {
+                $country = 'France';
+            } else {
+                $country = $country_code;
+            }
         }
 
         return [
@@ -67,22 +75,20 @@ class Peripheral extends AbstractAsset
             'modele'                => $model_name,
             'quantite'              => 1,
             'nomCourtDatacenter'    => '',
-            'dateAchat'             => $this->item->fields['date_purchase'] ?? date('Y-m-d'),
+            'dateAchat'             => $this->item->fields['date_purchase'] ?? '',
             'dateRetrait'           => '',
-            'dureeUsageInterne'     => '',
-            'dureeUsageAmont'       => '',
-            'dureeUsageAval'        => '',
             'type'                  => $type_name,
-            'statut'                => 'En fonction',
-            'paysDUtilisation'      => $country_code,
+            'statut'                => 'actif',
+            'paysDUtilisation'      => $country,
             'consoElecAnnuelle'     => '',
             'utilisateur'           => '',
             'nomSourceDonnee'       => '',
             'nomEntite'             => '',
             'nbCoeur'               => '',
+            'nbJourUtiliseAn'       => '365',
+            'goTelecharge'          => '',
             'modeUtilisation'       => '',
-            'tauxUtilisation'       => '',
-            'qualite'               => ''
+            'tauxUtilisation'       => ''
         ];
     }
 }

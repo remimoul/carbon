@@ -52,14 +52,19 @@ class Monitor extends AbstractAsset
         }
 
         $type = new MonitorType();
-        $type_name = '';
+        $type_name = 'Ecran'; // Monitors are always mapped to Ecran in NumEcoEval
         if ($type->getFromDB($this->item->fields['monitortypes_id'])) {
-            $type_name = $type->fields['name'];
+            $type_name = 'Ecran';
         }
 
         $country_code = Location::getZoneCode($this->item);
-        if (empty($country_code)) {
-            $country_code = 'FRA'; // Default for NumEcoEval
+        $country = 'France';
+        if (!empty($country_code)) {
+            if ($country_code === 'FRA') {
+                $country = 'France';
+            } else {
+                $country = $country_code;
+            }
         }
 
         return [
@@ -67,22 +72,20 @@ class Monitor extends AbstractAsset
             'modele'                => $model_name,
             'quantite'              => 1,
             'nomCourtDatacenter'    => '',
-            'dateAchat'             => $this->item->fields['date_purchase'] ?? date('Y-m-d'),
+            'dateAchat'             => $this->item->fields['date_purchase'] ?? '',
             'dateRetrait'           => '',
-            'dureeUsageInterne'     => '',
-            'dureeUsageAmont'       => '',
-            'dureeUsageAval'        => '',
             'type'                  => $type_name,
-            'statut'                => 'En fonction',
-            'paysDUtilisation'      => $country_code,
+            'statut'                => 'actif',
+            'paysDUtilisation'      => $country,
             'consoElecAnnuelle'     => '',
             'utilisateur'           => '',
             'nomSourceDonnee'       => '',
             'nomEntite'             => '',
             'nbCoeur'               => '',
+            'nbJourUtiliseAn'       => '365',
+            'goTelecharge'          => '',
             'modeUtilisation'       => '',
-            'tauxUtilisation'       => '',
-            'qualite'               => ''
+            'tauxUtilisation'       => ''
         ];
     }
 }

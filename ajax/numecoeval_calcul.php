@@ -183,6 +183,9 @@ function handleUploadInventory(): void
 function handleSubmitCalcul(): void
 {
     try {
+        /** @var \DBmysql $DB */
+        global $DB;
+
         $lotName = $_SESSION['numecoeval_lot_name'] ?? null;
         $organization = $_SESSION['numecoeval_organization'] ?? 'GLPI';
 
@@ -218,7 +221,7 @@ function handleSubmitCalcul(): void
         }
 
         // Submit
-        $submitted = $client->submitCalcul($lotName, $steps, $criteria);
+        $submitted = $client->submitCalcul($lotName, $steps, $criteria, $organization);
 
         if (!$submitted) {
             echo json_encode([
@@ -230,13 +233,72 @@ function handleSubmitCalcul(): void
             return;
         }
 
+        // Poll for results — NumEcoEval calculation is asynchronous
+        $all_results = [];
+        $maxAttempts = 12;
+        $delaySeconds = 3;
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            sleep($delaySeconds);
+            $all_results = $client->fetchResults($lotName, $organization);
+            if (!empty($all_results)) {
+                break;
+            }
+        }
+
+        if (empty($all_results)) {
+            echo json_encode([
+                'success' => false,
+                'message' => __('Calculation submitted, but failed to retrieve results from Indicators API (Timeout).', 'carbon')
+            ]);
+            return;
+        }
+
+        // Map GLPI itemtypes to their NumEcoEval engine classes
+        $engineMap = [
+            GlpiComputer::class          => NumEcoEvalComputer::class,
+            GlpiMonitor::class           => NumEcoEvalMonitor::class,
+            GlpiNetworkEquipment::class  => NumEcoEvalNetworkEquipment::class,
+            GlpiPeripheral::class        => NumEcoEvalPeripheral::class,
+        ];
+
+        // Update the DB for each item
+        $success_count = 0;
+        foreach (PLUGIN_CARBON_TYPES as $glpiItemtype) {
+            if (!isset($engineMap[$glpiItemtype])) {
+                continue;
+            }
+            $engineClass = $engineMap[$glpiItemtype];
+            $table = $glpiItemtype::getTable();
+
+            $all_iterator = $DB->request([
+                'SELECT' => ['id'],
+                'FROM'   => $table,
+                'WHERE'  => [
+                    'is_deleted'  => 0,
+                    'is_template' => 0,
+                ],
+            ]);
+
+            foreach ($all_iterator as $row) {
+                $item = new $glpiItemtype();
+                if ($item->getFromDB($row['id'])) {
+                    $assetName = $item->fields['name'];
+                    $results = $all_results[$assetName] ?? null;
+                    if ($results !== null) {
+                        $item_engine = new $engineClass($item);
+                        if ($item_engine->updateAssetImpacts($results)) {
+                            $success_count++;
+                        }
+                    }
+                }
+            }
+        }
+
         echo json_encode([
             'success'  => true,
             'message'  => sprintf(
-                __('Calculation submitted successfully for lot "%s". Steps: %s, Criteria: %s', 'carbon'),
-                $lotName,
-                implode(', ', $steps),
-                implode(', ', $criteria)
+                __('Calculation submitted and results retrieved successfully! Updated %d assets in GLPI.', 'carbon'),
+                $success_count
             ),
             'lot_name' => $lotName,
             'steps'    => $steps,

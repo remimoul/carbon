@@ -85,6 +85,12 @@ window.GLPIPlugin.Carbon = {
                         step2Btn.classList.add('btn-warning');
                     }
                 }
+                if (data.success && action === 'submit_calcul') {
+                    // Reload page to show new calculations on the dashboard
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
+                }
             })
             .catch(function(error) {
                 console.error('NumEcoEval Error:', error);
