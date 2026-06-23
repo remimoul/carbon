@@ -46,7 +46,21 @@ class Client extends AbstractClient
 
     /** @var array Mapping between NumEcoEval criteria names and Carbon impact types */
     private static array $criteria_mapping = [
-        'Changement climatique' => 'gwp',
+        'Changement climatique'                          => 'gwp',
+        'Climate change'                                 => 'gwp',
+        'Climate Change'                                 => 'gwp',
+        'Épuisement des ressources (minéraux et métaux)' => 'adp',
+        'Resource use (minerals and metals)'             => 'adp',
+        'Total Primary Energy'                           => 'pe',
+        'Énergie primaire totale'                        => 'pe',
+        'Acidification'                                  => 'ap',
+        'Ionising radiation'                             => 'ir',
+        'Rayonnements ionisants'                         => 'ir',
+        'Particulate matter and respiratory inorganics'  => 'pm',
+        'Particulate matter'                             => 'pm',
+        'Particules fines'                               => 'pm',
+        'Resource use fossils'                           => 'adpf',
+        'Épuisement des ressources fossiles'              => 'adpf',
     ];
 
     public function __construct(RestApiClientInterface $client)
@@ -221,21 +235,31 @@ class Client extends AbstractClient
             return [];
         }
 
-        $impacts_by_asset = [];
+        $raw_impacts = [];
 
         foreach ($lines as $line) {
             if (empty(trim($line))) {
                 continue;
             }
-            $data = str_getcsv($line, ";");
+            $data = str_getcsv($line, ",");
             if (count($data) < 5) {
-                continue;
+                // If it is semicolon separated, try semicolon as fallback
+                $data = str_getcsv($line, ";");
+                if (count($data) < 5) {
+                    continue;
+                }
             }
 
             $assetName = $data[0]; // nom_equipement
+            $stage     = strtoupper($data[1]); // etapeacv
             $value     = (float)str_replace(',', '.', $data[2]); // impact_unitaire
             $unit      = $data[3]; // unite
             $criteria  = $data[4]; // critere
+
+            // Exclude UTILISATION stage for embodied impact
+            if ($stage === 'UTILISATION') {
+                continue;
+            }
 
             $impactType = self::$criteria_mapping[$criteria] ?? null;
             if ($impactType === null) {
@@ -251,12 +275,26 @@ class Client extends AbstractClient
             if (stripos($unit, 'kg') !== false) {
                 $value *= 1000;
             }
+            // Conversion to Joules if it's MJ
+            if (stripos($unit, 'mj') !== false) {
+                $value *= 1000000;
+            }
 
-            $impacts_by_asset[$assetName][$impactId] = new TrackedFloat(
-                $value,
-                null,
-                TrackedFloat::DATA_QUALITY_ESTIMATED
-            );
+            if (!isset($raw_impacts[$assetName][$impactId])) {
+                $raw_impacts[$assetName][$impactId] = 0.0;
+            }
+            $raw_impacts[$assetName][$impactId] += $value;
+        }
+
+        $impacts_by_asset = [];
+        foreach ($raw_impacts as $assetName => $impacts) {
+            foreach ($impacts as $impactId => $val) {
+                $impacts_by_asset[$assetName][$impactId] = new TrackedFloat(
+                    $val,
+                    null,
+                    TrackedFloat::DATA_QUALITY_ESTIMATED
+                );
+            }
         }
 
         return $impacts_by_asset;
