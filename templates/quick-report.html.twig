@@ -73,6 +73,15 @@
               </button>
             </div>
 
+            {% if numecoeval_last_lot_name %}
+              <div class="mt-3 text-muted small">
+                <i class="fas fa-history text-secondary me-1"></i>
+                {{ __('Last calculation run:', 'carbon') }}
+                <strong>{{ numecoeval_last_calculation_date }}</strong>
+                ({{ __('Lot:', 'carbon') }} <code>{{ numecoeval_last_lot_name }}</code>)
+              </div>
+            {% endif %}
+
             {# Status message area #}
             <div id="numecoeval-status" class="alert mt-2" style="display:none;"></div>
           </div>

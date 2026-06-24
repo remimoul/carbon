@@ -294,6 +294,12 @@ function handleSubmitCalcul(): void
             }
         }
 
+        // Store last run info in configuration
+        \GlpiPlugin\Carbon\Config::setPluginConfigurationValues([
+            'numecoeval_last_lot_name'         => $lotName,
+            'numecoeval_last_calculation_date' => (new \DateTime())->format('Y-m-d H:i:s'),
+        ]);
+
         echo json_encode([
             'success'  => true,
             'message'  => sprintf(

@@ -124,6 +124,8 @@ class Report extends CommonDBTM
             'numecoeval_enabled' => strpos(\GlpiPlugin\Carbon\Config::getEmbodiedImpactEngine(), 'NumEcoEval') !== false,
             'numecoeval_ajax_url' => $CFG_GLPI['root_doc'] . '/plugins/carbon/ajax/numecoeval_calcul.php',
             'numecoeval_csrf_token' => Session::getNewCSRFToken(),
+            'numecoeval_last_lot_name' => \GlpiPlugin\Carbon\Config::getPluginConfigurationValue('numecoeval_last_lot_name'),
+            'numecoeval_last_calculation_date' => \GlpiPlugin\Carbon\Config::getPluginConfigurationValue('numecoeval_last_calculation_date'),
         ]);
     }
 
