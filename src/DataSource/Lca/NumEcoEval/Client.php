@@ -46,7 +46,21 @@ class Client extends AbstractClient
 
     /** @var array Mapping between NumEcoEval criteria names and Carbon impact types */
     private static array $criteria_mapping = [
-        'Changement climatique' => 'gwp',
+        'Changement climatique'                          => 'gwp',
+        'Climate change'                                 => 'gwp',
+        'Climate Change'                                 => 'gwp',
+        'Épuisement des ressources (minéraux et métaux)' => 'adp',
+        'Resource use (minerals and metals)'             => 'adp',
+        'Total Primary Energy'                           => 'pe',
+        'Énergie primaire totale'                        => 'pe',
+        'Acidification'                                  => 'ap',
+        'Ionising radiation'                             => 'ir',
+        'Rayonnements ionisants'                         => 'ir',
+        'Particulate matter and respiratory inorganics'  => 'pm',
+        'Particulate matter'                             => 'pm',
+        'Particules fines'                               => 'pm',
+        'Resource use fossils'                           => 'adpf',
+        'Épuisement des ressources fossiles'              => 'adpf',
     ];
 
     public function __construct(RestApiClientInterface $client)
@@ -64,26 +78,82 @@ class Client extends AbstractClient
      * Upload inventory CSV to NumEcoEval Exposition service
      *
      * @param string $csvContent
+     * @param string $lotName
+     * @param string $organization
      * @return bool
      */
-    public function uploadCsv(string $csvContent): bool
+    public function uploadCsv(string $csvContent, string $lotName, string $organization = 'GLPI'): bool
     {
-        $url = Config::getConfigurationValue('numecoeval_exposition_url');
+        $url = rtrim(Config::getConfigurationValue('numecoeval_exposition_url'), '/');
         if (empty($url)) {
             throw new RuntimeException('NumEcoEval Exposition URL is not configured');
         }
 
         $response = $this->client->request('POST', $url . '/entrees/csv', [
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+            'query' => [
+                'nomOrganisation' => $organization,
+                'nomLot'          => $lotName,
+            ],
             'multipart' => [
                 [
-                    'name'     => 'file',
+                    'name'     => 'csvEquipementPhysique',
                     'contents' => $csvContent,
-                    'filename' => 'equipement_physique.csv'
-                ]
+                    'filename' => 'equipement_physique.csv',
+                    'headers'  => ['Content-Type' => 'text/csv']
+                ],
+                ['name' => 'csvDataCenter', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvEquipementVirtuel', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvApplication', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvOperationNonIT', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvMessagerie', 'contents' => '', 'filename' => ''],
+                ['name' => 'csvEntite', 'contents' => '', 'filename' => '']
             ]
         ]);
 
         return $response !== false;
+    }
+
+    /**
+     * Fetch valid steps from Referential service
+     *
+     * @return array
+     */
+    public function fetchSteps(): array
+    {
+        $url = rtrim(Config::getConfigurationValue('numecoeval_referential_url'), '/');
+        if (empty($url)) {
+            throw new RuntimeException('NumEcoEval Referential URL is not configured');
+        }
+
+        $response = $this->client->request('GET', $url . '/referentiel/etapes', []);
+        if (empty($response) || !is_array($response)) {
+            return [];
+        }
+
+        return array_column($response, 'code');
+    }
+
+    /**
+     * Fetch valid criteria from Referential service
+     *
+     * @return array
+     */
+    public function fetchCriteria(): array
+    {
+        $url = rtrim(Config::getConfigurationValue('numecoeval_referential_url'), '/');
+        if (empty($url)) {
+            throw new RuntimeException('NumEcoEval Referential URL is not configured');
+        }
+
+        $response = $this->client->request('GET', $url . '/referentiel/criteres', []);
+        if (empty($response) || !is_array($response)) {
+            return [];
+        }
+
+        return array_column($response, 'nomCritere');
     }
 
     /**
@@ -94,20 +164,24 @@ class Client extends AbstractClient
      * @param array $criterias
      * @return bool
      */
-    public function submitCalcul(string $lotName, array $steps = [], array $criterias = []): bool
+    public function submitCalcul(string $lotName, array $steps = [], array $criterias = [], string $organization = 'GLPI'): bool
     {
-        $url = Config::getConfigurationValue('numecoeval_exposition_url');
+        $url = rtrim(Config::getConfigurationValue('numecoeval_exposition_url'), '/');
         if (empty($url)) {
             throw new RuntimeException('NumEcoEval Exposition URL is not configured');
         }
 
         $payload = [
-            'nomLot'   => $lotName,
-            'etapes'   => $steps,
-            'criteres' => $criterias
+            'nomLot'          => $lotName,
+            'nomOrganisation' => $organization,
+            'etapes'          => $steps,
+            'criteres'        => $criterias
         ];
 
         $response = $this->client->request('POST', $url . '/entrees/calculs/soumission', [
+            'query' => [
+                'nomOrganisation' => $organization,
+            ],
             'json' => $payload
         ]);
 
@@ -123,12 +197,15 @@ class Client extends AbstractClient
      */
     public function fetchResults(string $lotName, string $organization = 'GLPI'): array
     {
-        $url = Config::getConfigurationValue('numecoeval_indicators_url');
+        $url = rtrim(Config::getConfigurationValue('numecoeval_indicators_url'), '/');
         if (empty($url)) {
             throw new RuntimeException('NumEcoEval Indicators URL is not configured');
         }
 
         $csvData = $this->client->request('GET', $url . '/indicateur/equipementPhysiqueCsv', [
+            'headers' => [
+                'Accept' => 'text/csv, text/plain, */*',
+            ],
             'query' => [
                 'nomLot'          => $lotName,
                 'nomOrganisation' => $organization,
@@ -158,21 +235,31 @@ class Client extends AbstractClient
             return [];
         }
 
-        $impacts_by_asset = [];
+        $raw_impacts = [];
 
         foreach ($lines as $line) {
             if (empty(trim($line))) {
                 continue;
             }
-            $data = str_getcsv($line, ";");
+            $data = str_getcsv($line, ",");
             if (count($data) < 5) {
-                continue;
+                // If it is semicolon separated, try semicolon as fallback
+                $data = str_getcsv($line, ";");
+                if (count($data) < 5) {
+                    continue;
+                }
             }
 
             $assetName = $data[0]; // nom_equipement
+            $stage     = strtoupper($data[1]); // etapeacv
             $value     = (float)str_replace(',', '.', $data[2]); // impact_unitaire
             $unit      = $data[3]; // unite
             $criteria  = $data[4]; // critere
+
+            // Exclude UTILISATION stage for embodied impact
+            if ($stage === 'UTILISATION') {
+                continue;
+            }
 
             $impactType = self::$criteria_mapping[$criteria] ?? null;
             if ($impactType === null) {
@@ -188,12 +275,26 @@ class Client extends AbstractClient
             if (stripos($unit, 'kg') !== false) {
                 $value *= 1000;
             }
+            // Conversion to Joules if it's MJ
+            if (stripos($unit, 'mj') !== false) {
+                $value *= 1000000;
+            }
 
-            $impacts_by_asset[$assetName][$impactId] = new TrackedFloat(
-                $value,
-                null,
-                TrackedFloat::DATA_QUALITY_ESTIMATED
-            );
+            if (!isset($raw_impacts[$assetName][$impactId])) {
+                $raw_impacts[$assetName][$impactId] = 0.0;
+            }
+            $raw_impacts[$assetName][$impactId] += $value;
+        }
+
+        $impacts_by_asset = [];
+        foreach ($raw_impacts as $assetName => $impacts) {
+            foreach ($impacts as $impactId => $val) {
+                $impacts_by_asset[$assetName][$impactId] = new TrackedFloat(
+                    $val,
+                    null,
+                    TrackedFloat::DATA_QUALITY_ESTIMATED
+                );
+            }
         }
 
         return $impacts_by_asset;

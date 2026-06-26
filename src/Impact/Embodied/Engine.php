@@ -51,7 +51,7 @@ class Engine extends CommonGLPI
         return [
             // 'Internal' => __('Internal', 'carbon'),
             'Boavizta' => __('Boavizta', 'carbon'),
-            // 'NumEcoVal' => __('NumEcoVal', 'carbon'),
+            'NumEcoEval' => __('NumEcoEval', 'carbon'),
             // 'Resilio' => __('Resilio', 'carbon'),
         ];
     }
@@ -120,6 +120,11 @@ class Engine extends CommonGLPI
             case 'Boavizta':
                 /** @var AbstractAsset $engine  */
                 $engine->setClient(new Client(new RestApiClient()));
+                break;
+            case 'NumEcoEval':
+                /** @var \GlpiPlugin\Carbon\Impact\Embodied\NumEcoEval\AssetInterface $engine */
+                $engine->setClient(new \GlpiPlugin\Carbon\DataSource\Lca\NumEcoEval\Client(new RestApiClient()));
+                break;
         }
 
         return $engine;

@@ -40,11 +40,11 @@ use Toolbox;
 
 class RestApiClient implements RestApiClientInterface
 {
-    public const DEFAULT_TIMEOUT = 5;
+    public const DEFAULT_TIMEOUT = 30;
     public const DEFAULT_HEADERS = [
         'Accept' => 'application/json; charset=utf-8',
     ];
-    public const DEFAULT_HTTP_VERSION = '2.0';
+    public const DEFAULT_HTTP_VERSION = '1.1';
 
     protected $api_client = null;
     protected $last_error = '';
@@ -62,8 +62,13 @@ class RestApiClient implements RestApiClientInterface
             // 'verify'          => false,
         ];
 
-        // array_merge_recursive() is used because it merges headers
-        $this->api_client = new Client(array_merge_recursive($local_params, $params));
+        // Merge params: use array_replace for top-level keys to avoid
+        // array_merge_recursive nesting headers into arrays
+        $merged = array_replace($local_params, $params);
+        if (isset($params['headers'])) {
+            $merged['headers'] = array_replace($local_params['headers'], $params['headers']);
+        }
+        $this->api_client = new Client($merged);
     }
 
     #[Override]
@@ -84,6 +89,19 @@ class RestApiClient implements RestApiClientInterface
                 $this->last_error['response'] = Message::toString($e->getResponse());
             }
 
+            Toolbox::logDebug($this->last_error);
+
+            return false;
+        }
+
+        // Check for HTTP error status codes (http_errors is disabled)
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 400) {
+            $this->last_error = [
+                'title'    => "API HTTP error",
+                'status'   => $statusCode,
+                'response' => (string) $response->getBody(),
+            ];
             Toolbox::logDebug($this->last_error);
 
             return false;

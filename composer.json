@@ -1,6 +1,6 @@
 {
     "require": {
-        "php": ">=8.2.0",
+        "php": ">=8.3",
         "geocoder-php/google-maps-provider": "^4.7",
         "geocoder-php/nominatim-provider": "^5.7",
         "league/iso3166": "^4.3",
