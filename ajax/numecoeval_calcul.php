@@ -61,6 +61,10 @@ switch ($action) {
         handleUploadInventory();
         break;
 
+    case 'download_inventory':
+        handleDownloadInventory();
+        break;
+
     case 'submit_calcul':
         handleSubmitCalcul();
         break;
@@ -320,5 +324,77 @@ function handleSubmitCalcul(): void
             'success' => false,
             'message' => __('Calculation submission error: ', 'carbon') . $e->getMessage()
         ]);
+    }
+}
+
+/**
+ * Action: Download the inventory CSV that is sent to NumEcoEval
+ */
+function handleDownloadInventory(): void
+{
+    // Map GLPI itemtypes to their NumEcoEval engine classes
+    $engineMap = [
+        GlpiComputer::class          => NumEcoEvalComputer::class,
+        GlpiMonitor::class           => NumEcoEvalMonitor::class,
+        GlpiNetworkEquipment::class  => NumEcoEvalNetworkEquipment::class,
+        GlpiPeripheral::class        => NumEcoEvalPeripheral::class,
+    ];
+
+    try {
+        /** @var \DBmysql $DB */
+        global $DB;
+
+        $items = [];
+        $engine_instance = null;
+
+        foreach (PLUGIN_CARBON_TYPES as $glpiItemtype) {
+            if (!isset($engineMap[$glpiItemtype])) {
+                continue;
+            }
+
+            $engineClass = $engineMap[$glpiItemtype];
+
+            // Fetch ALL non-deleted, non-template assets of this type
+            $table = $glpiItemtype::getTable();
+            $all_iterator = $DB->request([
+                'SELECT' => ['id'],
+                'FROM'   => $table,
+                'WHERE'  => [
+                    'is_deleted'  => 0,
+                    'is_template' => 0,
+                ],
+            ]);
+
+            foreach ($all_iterator as $row) {
+                $item = new $glpiItemtype();
+                if ($item->getFromDB($row['id'])) {
+                    $items[] = $item;
+                    if ($engine_instance === null) {
+                        $engine_instance = new $engineClass($item);
+                    }
+                }
+            }
+        }
+
+        if (empty($items) || $engine_instance === null) {
+            header('Content-Type: text/plain; charset=UTF-8');
+            echo __('No assets found in GLPI inventory.', 'carbon');
+            return;
+        }
+
+        // Generate CSV
+        $csvContent = $engine_instance->generateCsvPublic($items);
+
+        // Send headers for download (replaces JSON header)
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="numecoeval_inventory_' . (new \DateTime())->format('Ymd_His') . '.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        echo $csvContent;
+        exit;
+    } catch (\Throwable $e) {
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo __('Error generating CSV: ', 'carbon') . $e->getMessage();
     }
 }

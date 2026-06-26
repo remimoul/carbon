@@ -1484,3 +1484,15 @@ msgstr "Calcul soumis et résultats récupérés avec succès ! %d équipements 
 #: ajax/numecoeval_calcul.php
 msgid "Calculation submission error: "
 msgstr "Erreur de soumission du calcul : "
+
+#: templates/quick-report.html.twig
+msgid "Download CSV inventory"
+msgstr "Télécharger l'inventaire CSV"
+
+#: ajax/numecoeval_calcul.php
+msgid "No assets found in GLPI inventory."
+msgstr "Aucun équipement trouvé dans l'inventaire GLPI."
+
+#: ajax/numecoeval_calcul.php
+msgid "Error generating CSV: "
+msgstr "Erreur lors de la génération du CSV : "
