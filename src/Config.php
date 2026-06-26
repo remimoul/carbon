@@ -48,6 +48,7 @@ use GuzzleHttp\Client;
 use Html;
 use Monitor as GlpiMonitor;
 use NetworkEquipment as GlpiNetworkEquipment;
+use Peripheral as GlpiPeripheral;
 use Override;
 use Session;
 use Twig\Extension\StringLoaderExtension;
@@ -59,6 +60,9 @@ class Config extends GlpiConfig
      * If set, overrides the setting in the database
      */
     public const ENV_BOAVIZTAPI_BASE_URL = 'GLPI_PLUGIN_CARBON_BOAVIZTAPI_BASE_URL';
+    public const ENV_NUMECOEVAL_EXPOSITION_URL = 'GLPI_PLUGIN_CARBON_NUMECOEVAL_EXPOSITION_URL';
+    public const ENV_NUMECOEVAL_INDICATORS_URL = 'GLPI_PLUGIN_CARBON_NUMECOEVAL_INDICATORS_URL';
+    public const ENV_NUMECOEVAL_REFERENTIAL_URL = 'GLPI_PLUGIN_CARBON_NUMECOEVAL_REFERENTIAL_URL';
     private const CONFIG_CONTEXT = 'plugin:carbon';
 
     #[Override]
@@ -105,6 +109,10 @@ class Config extends GlpiConfig
 
         $current_config = GlpiConfig::getConfigurationValues(self::CONFIG_CONTEXT);
         $current_config['geocoding_enabled'] ??= '0';
+        $current_config['impact_engines'] ??= 'Boavizta';
+        $current_config['numecoeval_exposition_url'] ??= '';
+        $current_config['numecoeval_indicators_url'] ??= '';
+        $current_config['numecoeval_referential_url'] ??= '';
         $canedit        = Session::haveRight(Config::$rightname, UPDATE);
 
         // Get config template foreach LCA data source
@@ -190,6 +198,7 @@ class Config extends GlpiConfig
             GlpiComputer::class,
             GlpiMonitor::class,
             GlpiNetworkEquipment::class,
+            GlpiPeripheral::class,
             // Printer::class,
             // Phone::class
         ];
@@ -278,6 +287,30 @@ class Config extends GlpiConfig
      */
     public static function getPluginConfigurationValue(string $name): ?string
     {
+        if ($name === 'boaviztapi_base_url') {
+            $value = getenv(self::ENV_BOAVIZTAPI_BASE_URL);
+            if ($value !== false) {
+                return $value;
+            }
+        }
+        if ($name === 'numecoeval_exposition_url') {
+            $value = getenv(self::ENV_NUMECOEVAL_EXPOSITION_URL);
+            if ($value !== false) {
+                return $value;
+            }
+        }
+        if ($name === 'numecoeval_indicators_url') {
+            $value = getenv(self::ENV_NUMECOEVAL_INDICATORS_URL);
+            if ($value !== false) {
+                return $value;
+            }
+        }
+        if ($name === 'numecoeval_referential_url') {
+            $value = getenv(self::ENV_NUMECOEVAL_REFERENTIAL_URL);
+            if ($value !== false) {
+                return $value;
+            }
+        }
         return GlpiConfig::getConfigurationValue(self::CONFIG_CONTEXT, $name);
     }
 

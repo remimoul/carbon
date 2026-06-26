@@ -13,3 +13,5 @@ locales/??.po
 tests/logs/*
 .phpunit.result.cache
 .vscode/launch.json
+GEMINI.md 
+NUMECOEVAL_PRP.md

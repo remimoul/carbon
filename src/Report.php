@@ -39,6 +39,7 @@ use Glpi\Application\View\TemplateRenderer;
 use Glpi\Dashboard\Grid as DashboardGrid;
 use GlpiPlugin\Carbon\Dashboard\Provider;
 use Override;
+use Session;
 
 class Report extends CommonDBTM
 {
@@ -119,6 +120,12 @@ class Report extends CommonDBTM
             'messages'  => $messages,
             'header_pic_url' => $header_pic_url,
             'footer_pic_url' => $footer_pic_url,
+            'carbon_js_url' => $CFG_GLPI['root_doc'] . '/plugins/carbon/lib/carbon.js',
+            'numecoeval_enabled' => strpos(\GlpiPlugin\Carbon\Config::getEmbodiedImpactEngine(), 'NumEcoEval') !== false,
+            'numecoeval_ajax_url' => $CFG_GLPI['root_doc'] . '/plugins/carbon/ajax/numecoeval_calcul.php',
+            'numecoeval_csrf_token' => Session::getNewCSRFToken(),
+            'numecoeval_last_lot_name' => \GlpiPlugin\Carbon\Config::getPluginConfigurationValue('numecoeval_last_lot_name'),
+            'numecoeval_last_calculation_date' => \GlpiPlugin\Carbon\Config::getPluginConfigurationValue('numecoeval_last_calculation_date'),
         ]);
     }
 
