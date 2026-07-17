@@ -179,7 +179,8 @@ abstract class AbstractAsset extends AbstractEmbodiedImpact implements AssetInte
         $output = fopen('php://temp', 'r+');
         $header_written = false;
 
-        foreach ($items as $item) {
+        for ($i = 0; $i < count($items); $i++) {
+            $item = $items[$i];
             $this->item = $item;
             $data = $this->getCsvData();
             if (!$header_written) {

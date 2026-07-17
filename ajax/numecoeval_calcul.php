@@ -30,7 +30,7 @@
  * -------------------------------------------------------------------------
  */
 
-include __DIR__ . '/../../../inc/includes.php';
+include_once __DIR__ . '/../../../inc/includes.php';
 
 use GlpiPlugin\Carbon\DataSource\Lca\NumEcoEval\Client;
 use GlpiPlugin\Carbon\DataSource\Lca\NumEcoEval\Config as NumEcoEvalConfig;
@@ -95,7 +95,8 @@ function handleUploadInventory(): void
         $engine_instance = null;
         $types_searched = [];
 
-        foreach (PLUGIN_CARBON_TYPES as $glpiItemtype) {
+        for ($i = 0; $i < count(PLUGIN_CARBON_TYPES); $i++) {
+            $glpiItemtype = PLUGIN_CARBON_TYPES[$i];
             if (!isset($engineMap[$glpiItemtype])) {
                 continue;
             }
