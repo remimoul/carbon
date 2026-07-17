@@ -1419,4 +1419,80 @@ msgstr "Moteur de calcul introuvable pour cet équipement."
 
 #: front/usageimpact.form.php:136
 msgid "Update of usage impact failed."
-msgstr "La mise à jour de l'impact d'utilisation a échoué."
+msgstr "La mise à jour de l'impact d'utilisation a échoué. "
+
+#: templates/quick-report.html.twig
+msgid "NumEcoEval LCA Calculation"
+msgstr "Calcul d'impact LCA NumEcoEval"
+
+#: templates/quick-report.html.twig
+msgid "Lifecycle assessment for peripherals via NumEcoEval. Follow the steps below."
+msgstr "Évaluation du cycle de vie des périphériques via NumEcoEval. Suivez les étapes ci-dessous."
+
+#: templates/quick-report.html.twig
+msgid "Step 1: Upload inventory"
+msgstr "Étape 1 : Envoyer l'inventaire"
+
+#: templates/quick-report.html.twig
+msgid "Step 2: Launch calculation"
+msgstr "Étape 2 : Lancer le calcul"
+
+#: templates/quick-report.html.twig
+msgid "Last calculation run:"
+msgstr "Dernier calcul lancé :"
+
+#: templates/quick-report.html.twig
+msgid "Lot:"
+msgstr "Lot :"
+
+#: ajax/numecoeval_calcul.php
+msgid "NumEcoEval is not the active engine"
+msgstr "NumEcoEval n'est pas le moteur de calcul actif"
+
+#: ajax/numecoeval_calcul.php
+msgid "No assets found in GLPI inventory. Searched types: %s"
+msgstr "Aucun équipement trouvé dans l'inventaire GLPI. Types recherchés : %s"
+
+#: ajax/numecoeval_calcul.php
+msgid "Failed to upload CSV to NumEcoEval Exposition API."
+msgstr "Échec de l'envoi du CSV à l'API d'exposition NumEcoEval."
+
+#: ajax/numecoeval_calcul.php
+msgid "Inventory uploaded successfully. %d assets sent. Lot: %s"
+msgstr "Inventaire envoyé avec succès. %d équipements envoyés. Lot : %s"
+
+#: ajax/numecoeval_calcul.php
+msgid "Upload error: "
+msgstr "Erreur d'envoi : "
+
+#: ajax/numecoeval_calcul.php
+msgid "No lot name found. Please upload the inventory first (Step 1)."
+msgstr "Aucun nom de lot trouvé. Veuillez d'abord envoyer l'inventaire (Étape 1)."
+
+#: ajax/numecoeval_calcul.php
+msgid "Failed to submit calculation to NumEcoEval."
+msgstr "Échec de la soumission du calcul à NumEcoEval."
+
+#: ajax/numecoeval_calcul.php
+msgid "Calculation submitted, but failed to retrieve results from Indicators API (Timeout)."
+msgstr "Calcul soumis, mais échec de la récupération des résultats depuis l'API Indicateurs (Timeout)."
+
+#: ajax/numecoeval_calcul.php
+msgid "Calculation submitted and results retrieved successfully! Updated %d assets in GLPI."
+msgstr "Calcul soumis et résultats récupérés avec succès ! %d équipements mis à jour dans GLPI."
+
+#: ajax/numecoeval_calcul.php
+msgid "Calculation submission error: "
+msgstr "Erreur de soumission du calcul : "
+
+#: templates/quick-report.html.twig
+msgid "Download CSV inventory"
+msgstr "Télécharger l'inventaire CSV"
+
+#: ajax/numecoeval_calcul.php
+msgid "No assets found in GLPI inventory."
+msgstr "Aucun équipement trouvé dans l'inventaire GLPI."
+
+#: ajax/numecoeval_calcul.php
+msgid "Error generating CSV: "
+msgstr "Erreur lors de la génération du CSV : "

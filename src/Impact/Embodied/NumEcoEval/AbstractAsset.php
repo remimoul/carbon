@@ -33,6 +33,7 @@
 namespace GlpiPlugin\Carbon\Impact\Embodied\NumEcoEval;
 
 use GlpiPlugin\Carbon\DataSource\Lca\NumEcoEval\Client;
+use GlpiPlugin\Carbon\EmbodiedImpact;
 use GlpiPlugin\Carbon\Impact\Embodied\AbstractEmbodiedImpact;
 use Override;
 use RuntimeException;
@@ -65,7 +66,20 @@ abstract class AbstractAsset extends AbstractEmbodiedImpact implements AssetInte
      */
     public static function evaluateAll(string $itemtype): int
     {
-        $iterator = self::getItemsToEvaluate($itemtype);
+        /** @var \DBmysql $DB */
+        global $DB;
+
+        // Bypass entity restriction in CLI/batch context (no active session)
+        $crit = [
+            [
+                'OR' => [
+                    EmbodiedImpact::getTableField('id') => null,
+                    EmbodiedImpact::getTableField('recalculate') => 1,
+                ],
+            ],
+        ];
+        $query = self::getEvaluableQuery($itemtype, $crit, false);
+        $iterator = $DB->request($query);
         $items = [];
         $engine_instance = null;
 
@@ -165,7 +179,8 @@ abstract class AbstractAsset extends AbstractEmbodiedImpact implements AssetInte
         $output = fopen('php://temp', 'r+');
         $header_written = false;
 
-        foreach ($items as $item) {
+        for ($i = 0; $i < count($items); $i++) {
+            $item = $items[$i];
             $this->item = $item;
             $data = $this->getCsvData();
             if (!$header_written) {
