@@ -26,6 +26,14 @@ The estimated environmental impact of IT is 3% to 4% share of GHG emissions of a
 The Carbon plugin for GLPI aims to analyze the life cycle of your park inventory and show key values of environmental impact with ease. Check the inventory completion of your assets, describe their power consumption and their uptime, and you'll get an evaluation for greenhouse gas emissions, abiotic depletion potential and primary energy. The results are divided into manufacturing and usage scopes. With this information, identify the most impacting assets to apply the best solutions to make your activity more sustainable.
 
 
+## Calculation Engines
+
+The plugin supports different calculation engines to evaluate the environmental impact (LCA) of your IT assets:
+
+- **Boaviztapi**: Evaluates multiple asset types (Computers, Monitors, Network Equipments, etc.) via its API.
+- **NumEcoEval** (v2.2.1): A microservices-based API designed to assess the environmental footprint of IT systems. In this integration, NumEcoEval is used locally via its REST API (Exposition on port `18081`, Indicateurs on port `18085`, and Référentiels on port `18080`) to calculate the embodied impact of physical equipments (such as Peripherals) using CSV inventory uploads.
+
+
 ## Documentation
 
 The documentation of the plugin is available [here](https://glpi-plugins.readthedocs.io/en/latest/carbon/index.html)
